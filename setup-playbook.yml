@@ -1,0 +1,70 @@
+- name: Setup
+  hosts: mine
+  vars:
+    username: lawrence
+  vars_files:
+    - vars/vault.yml
+  tasks:
+    - name: DNF Software
+      ansible.builtin.dnf5:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - neovim
+        - fish
+        - alacritty
+        - tmux
+        - fedora-workstation-repositories
+        - google-chrome-stable
+        - steam
+        - uv
+      become: yes
+
+    - name: Add Flathub remote repository
+      community.general.flatpak_remote:
+        name: flathub
+        state: present
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: user
+
+    - name: Flatpak Software
+      become: no
+      community.general.flatpak:
+        name: "{{ item }}"
+        state: present
+        remote: flathub
+        method: user
+      loop:
+        - org.telegram.desktop
+        - md.obsidian.Obsidian
+
+    - name: XRay core
+      ansible.builtin.shell: 
+        cmd: bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+        creates: /usr/local/etc/xray/config.json
+      args:
+        executable: /bin/bash
+      become: yes
+
+    - name: Shell
+      block:
+      - name: Find the absolute path of fish
+        ansible.builtin.command: which fish
+        register: fish_path
+        changed_when: false
+        failed_when: fish_path.rc != 0
+
+      - name: Ensure fish is registered in /etc/shells
+        ansible.builtin.lineinfile:
+          path: /etc/shells
+          line: "{{ fish_path.stdout.strip() }}"
+          create: true
+          mode: '0644'
+        become: yes
+
+      - name: Set fish as the default login shell for the user
+        ansible.builtin.user:
+          name: "{{ username }}"
+          shell: "{{ fish_path.stdout.strip() }}"
+        become: yes
+
