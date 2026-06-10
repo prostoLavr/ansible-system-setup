@@ -2,23 +2,36 @@
   hosts: mine
   vars:
     username: lawrence
-  vars_files:
-    - vars/vault.yml
   tasks:
-    - name: DNF Software
+    - name: Terminal DNF software
       ansible.builtin.dnf5:
-        name: "{{ item }}"
+        name: 
+          - neovim
+          - fish
+          - tmux
+          - uv
         state: present
-      loop:
-        - neovim
-        - fish
-        - alacritty
-        - tmux
-        - fedora-workstation-repositories
-        - google-chrome-stable
-        - steam
-        - uv
       become: yes
+
+
+    - name: GUI DNF Software
+      ansible.builtin.dnf5:
+        name: 
+          - alacritty
+          - fedora-workstation-repositories
+          - google-chrome-stable
+          - steam
+        state: present
+      become: yes
+
+    - name: Nvidia DNF Software
+      ansible.builtin.dnf5:
+        name: 
+          - akmod-nvidia
+          - xorg-x11-drv-nvidia-cuda
+        state: present
+      become: yes
+
 
     - name: Add Flathub remote repository
       community.general.flatpak_remote:
@@ -27,26 +40,20 @@
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
         method: user
 
-    - name: Flatpak Software
+    - name: Flatpak GUI Software
       become: no
       community.general.flatpak:
-        name: "{{ item }}"
+        name: 
+          - org.telegram.desktop
+          - md.obsidian.Obsidian
+          - com.mikrotik.WinBox
+          - com.usebottles.bottles
+          - com.belmoussaoui.Authenticator
         state: present
         remote: flathub
         method: user
-      loop:
-        - org.telegram.desktop
-        - md.obsidian.Obsidian
 
-    - name: XRay core
-      ansible.builtin.shell: 
-        cmd: bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
-        creates: /usr/local/etc/xray/config.json
-      args:
-        executable: /bin/bash
-      become: yes
-
-    - name: Shell
+    - name: Setup fish for user
       block:
       - name: Find the absolute path of fish
         ansible.builtin.command: which fish
