@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT_PATH="$HOME/.ansible-system-setup/"
+PROJECT_PATH="$HOME/.system-setup/"
 PROJECT_URL="git@github.com:prostoLavr/ansible-system-setup.git"
 INVENTORY_FILE="inventory.yml"
 VAULT_PASS_FILE=".vault_pass"
@@ -24,7 +24,7 @@ if [ ! -f "$INVENTORY_FILE" ]; then
   echo -n "$VAULT_PASS" >"$VAULT_PASS_FILE"
   chmod 600 "$VAULT_PASS_FILE"
 
-  echo -n "Encrypting server password..."
+  echo -n "Encrypting your local machine password..."
   ENCRYPTED_PASS=$(echo -n "$SERVER_PASS" | ansible-vault encrypt_string \
     --vault-password-file="$VAULT_PASS_FILE" \
     --stdin-name 'ansible_sudo_pass')
