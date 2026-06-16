@@ -3,8 +3,8 @@ set -e
 
 PROJECT_PATH="$HOME/.ansible-system-setup/"
 PROJECT_URL="git@github.com:prostoLavr/ansible-system-setup.git"
-INVENTORY_FILE="inventory.ini"
-VAULT_PASS_FILE=".vault_pass" # Temporary password file for automation
+INVENTORY_FILE="inventory.yml"
+VAULT_PASS_FILE=".vault_pass"
 
 if [ ! -d "$PROJECT_PATH" ]; then
   git clone "$PROJECT_URL" "$PROJECT_PATH"
@@ -31,13 +31,12 @@ if [ ! -f "$INVENTORY_FILE" ]; then
   echo " Done."
 
   cat <<EOF >"$INVENTORY_FILE"
-[local]
-localhost
-
-[local:vars]
-ansible_connection=local
-ansible_python_interpreter=/usr/bin/python3
-$ENCRYPTED_PASS
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: /usr/bin/python3
+      $ENCRYPTED_PASS
 EOF
 
   rm -f "$VAULT_PASS_FILE"
@@ -45,4 +44,4 @@ EOF
   echo "Success! Secured '$INVENTORY_FILE' has been created."
 fi
 
-ansible-playbook -i inventory.ini setup-playbook.yml --ask-vault-pass
+ansible-playbook -i "$INVENTORY_FILE" setup-playbook.yml --ask-vault-pass

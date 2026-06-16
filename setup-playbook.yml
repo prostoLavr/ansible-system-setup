@@ -1,5 +1,5 @@
 - name: Setup
-  hosts: mine
+  hosts: localhost
   vars:
     setup_username: lawrence
   tasks:
