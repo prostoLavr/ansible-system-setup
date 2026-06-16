@@ -25,6 +25,7 @@
           - docker-buildx-plugin
           - docker-compose-plugin
           - fd-find
+          - htop
         state: present
       become: yes
 
