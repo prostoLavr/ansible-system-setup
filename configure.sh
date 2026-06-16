@@ -2,17 +2,33 @@
 set -e
 
 PROJECT_PATH="$HOME/.system-setup/"
-PROJECT_URL="git@github.com:prostoLavr/ansible-system-setup.git"
 INVENTORY_FILE="inventory.yml"
 VAULT_PASS_FILE=".vault_pass"
 
-if [ ! -d "$PROJECT_PATH" ]; then
-  git clone "$PROJECT_URL" "$PROJECT_PATH"
+cd "$PROJECT_PATH"
+command_list=("update" "install" "recreate-inventory")
+command_found=0
+for item in "${command_list[@]}"; do
+  if [[ "$item" == "$1" ]]; then
+    command_found=1
+    break
+  fi
+done
+if ((!command_found)); then
+  echo "Usage: system-setup COMMAND"
+  echo "Commands:"
+  echo "  update                update installation"
+  echo "  install               run configuring system"
+  echo "  recreate-inventory    recreate inventory file"
+  exit 0
 fi
 
-cd "$PROJECT_PATH"
+if [[ "$1" == "update" ]]; then
+  git pull
+  git reset --hard main
+fi
 
-if [ ! -f "$INVENTORY_FILE" ]; then
+if [[ "$1" == "install" ]] && [ ! -f "$INVENTORY_FILE" ] || [[ "$1" == "recreate-inventory" ]]; then
   echo "Creating a new secured inventory file..."
 
   read -sp "Enter the password for your local machine: " SERVER_PASS
@@ -25,9 +41,7 @@ if [ ! -f "$INVENTORY_FILE" ]; then
   chmod 600 "$VAULT_PASS_FILE"
 
   echo -n "Encrypting your local machine password..."
-  ENCRYPTED_PASS=$(echo -n "$SERVER_PASS" | ansible-vault encrypt_string \
-    --vault-password-file="$VAULT_PASS_FILE" \
-    --stdin-name 'ansible_sudo_pass')
+  ENCRYPTED_PASS=$(echo -n "$SERVER_PASS" | ansible-vault encrypt_string --vault-password-file="$VAULT_PASS_FILE" --stdin-name 'ansible_sudo_pass')
   echo " Done."
 
   cat <<EOF >"$INVENTORY_FILE"
@@ -44,4 +58,6 @@ EOF
   echo "Success! Secured '$INVENTORY_FILE' has been created."
 fi
 
-ansible-playbook -i "$INVENTORY_FILE" setup-playbook.yml --ask-vault-pass
+if [[ "$1" == "install" ]]; then
+  ansible-playbook -i "$INVENTORY_FILE" setup-playbook.yml --ask-vault-pass
+fi

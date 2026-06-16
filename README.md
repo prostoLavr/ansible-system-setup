@@ -12,7 +12,17 @@ wget -qO- https://raw.githubusercontent.com/prostoLavr/ansible-system-setup/refs
 ```
 
 ## Run
+### help
 ```bash
-configure.sh
+system-setup
+```
+or
+```bash
+system-setup help
+```
+
+## Run software installation
+```bash
+system-setup install
 ```
 

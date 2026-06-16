@@ -104,4 +104,4 @@ sudo chmod 755 "$SETUP_DIR/configure.sh"
 
 sudo chown -h root:root "$BIN_DIR/$CONFIG_NAME"
 
-echo "Done."
+echo "Done. Read README.md or try system-setup help"
