@@ -3,12 +3,12 @@
 
 ### with curl
 ```bash
-curl -sSL https://raw.githubusercontent.com/prostoLavr/ansible-system-setup/refs/heads/main/init.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/prostoLavr/ansible-system-setup/refs/heads/main/init.sh | bash
 ```
 
 ### with wget
 ```bash
-wget -qO- https://raw.githubusercontent.com/prostoLavr/ansible-system-setup/refs/heads/main/init.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/prostoLavr/ansible-system-setup/refs/heads/main/init.sh | bash
 ```
 
 ## Run
