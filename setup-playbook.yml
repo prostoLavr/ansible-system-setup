@@ -1,22 +1,36 @@
 - name: Setup
   hosts: mine
   vars:
-    username: lawrence
+    setup_username: lawrence
   tasks:
+    - name: Add DNF repos
+      ansible.builtin.yum_repository:
+        name: Docker
+        description: Docker Repository
+        baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
+        gpgcheck: false
+        enabled: true
+      become: true
+
     - name: Terminal DNF software
       ansible.builtin.dnf5:
-        name: 
+        name:
           - neovim
           - fish
           - tmux
           - uv
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+          - fd-find
         state: present
       become: yes
 
-
     - name: GUI DNF Software
       ansible.builtin.dnf5:
-        name: 
+        name:
           - alacritty
           - fedora-workstation-repositories
           - google-chrome-stable
@@ -26,12 +40,11 @@
 
     - name: Nvidia DNF Software
       ansible.builtin.dnf5:
-        name: 
+        name:
           - akmod-nvidia
           - xorg-x11-drv-nvidia-cuda
         state: present
       become: yes
-
 
     - name: Add Flathub remote repository
       community.general.flatpak_remote:
@@ -43,35 +56,74 @@
     - name: Flatpak GUI Software
       become: no
       community.general.flatpak:
-        name: 
+        name:
           - org.telegram.desktop
           - md.obsidian.Obsidian
           - com.mikrotik.WinBox
           - com.usebottles.bottles
           - com.belmoussaoui.Authenticator
+          - com.discordapp.Discord
         state: present
         remote: flathub
         method: user
 
+    - name: Enable and start Docker service
+      ansible.builtin.systemd_service:
+        name: docker
+        enabled: true
+        state: started
+      become: true
+
     - name: Setup fish for user
       block:
-      - name: Find the absolute path of fish
-        ansible.builtin.command: which fish
-        register: fish_path
-        changed_when: false
-        failed_when: fish_path.rc != 0
+        - name: Find the absolute path of fish
+          ansible.builtin.command: which fish
+          register: fish_path
+          changed_when: false
+          failed_when: fish_path.rc != 0
 
-      - name: Ensure fish is registered in /etc/shells
-        ansible.builtin.lineinfile:
-          path: /etc/shells
-          line: "{{ fish_path.stdout.strip() }}"
-          create: true
-          mode: '0644'
-        become: yes
+        - name: Ensure fish is registered in /etc/shells
+          ansible.builtin.lineinfile:
+            path: /etc/shells
+            line: "{{ fish_path.stdout.strip() }}"
+            create: true
+            mode: "0644"
+          become: yes
 
-      - name: Set fish as the default login shell for the user
-        ansible.builtin.user:
-          name: "{{ username }}"
-          shell: "{{ fish_path.stdout.strip() }}"
-        become: yes
+        - name: Set fish as the default login shell for the user
+          ansible.builtin.user:
+            name: "{{ setup_username }}"
+            shell: "{{ fish_path.stdout.strip() }}"
+          become: yes
 
+    - name: Add user to the docker group
+      ansible.builtin.user:
+        name: "{{ setup_username }}"
+        groups:
+          - docker
+        append: true
+      become: true
+
+    - name: Start and enable Docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install Lazyvim
+      ansible.builtin.git:
+        repo: "git@github.com:prostoLavr/lazy.git"
+        dest: "/home/{{ setup_username }}/.config/nvim"
+        clone: yes
+        update: no
+
+    - name: Inttall Terraform
+      ansible.builtin.unarchive:
+        src: "https://mirror.yandex.ru/mirrors/releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip"
+        dest: "/usr/local/bin/"
+        remote_src: yes
+        include:
+          - "terraform"
+        creates: "/usr/loca/bin/terraform"
+        mode: "755"
+      become: yes
