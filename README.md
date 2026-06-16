@@ -16,4 +16,3 @@ wget -qO- https://raw.githubusercontent.com/prostoLavr/ansible-system-setup/refs
 configure.sh
 ```
 
-```
