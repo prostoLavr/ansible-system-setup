@@ -24,6 +24,11 @@
         state: present
       become: yes
 
+    - name: Enable Fedora COPR repository
+      community.general.copr:
+        state: enabled
+        name: "@ai-ml/nvidia-container-toolkit"
+
     - name: Virtualization DNF software
       ansible.builtin.dnf5:
         name:
@@ -34,7 +39,16 @@
           - docker-compose-plugin
           - qemu
           - "@virtualization"
+          - "libvirt"
+          - nvidia-container-toolkit
+          - nvidia-container-toolkit-selinux
         state: present
+      become: yes
+
+    - name: Generate CDI Configuration
+      ansible.builtin.shell: "nvidia-ctk cdi generate -output /etc/cdi/nvidia.yaml"
+      args:
+        creates: "/etc/cdi/nvidia.yaml"
       become: yes
 
     - name: GUI DNF Software
